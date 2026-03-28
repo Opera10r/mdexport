@@ -1,0 +1,148 @@
+{
+  "name": "mdexport-vscode",
+  "displayName": "MDExport — Markdown to PDF & DOCX",
+  "description": "Export beautiful PDFs and DOCX files from Markdown with fonts, themes, cover pages and more.",
+  "version": "1.0.0",
+  "publisher": "ravensgatedev",
+  "license": "MIT",
+  "categories": ["Other", "Formatters"],
+  "keywords": ["markdown", "pdf", "docx", "export", "md to pdf", "markdown export", "markdown pdf"],
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": ["onLanguage:markdown"],
+  "main": "./out/extension.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -watch",
+    "package": "vsce package"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "mdexport.exportPDF",
+        "title": "MDExport: Export as PDF"
+      },
+      {
+        "command": "mdexport.exportDOCX",
+        "title": "MDExport: Export as DOCX"
+      },
+      {
+        "command": "mdexport.openPanel",
+        "title": "MDExport: Open Export Panel"
+      },
+      {
+        "command": "mdexport.enterLicense",
+        "title": "MDExport: Enter License Key"
+      },
+      {
+        "command": "mdexport.licenseStatus",
+        "title": "MDExport: License Status"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "resourceExtname == .md",
+          "command": "mdexport.exportPDF",
+          "group": "navigation@100"
+        },
+        {
+          "when": "resourceExtname == .md",
+          "command": "mdexport.exportDOCX",
+          "group": "navigation@101"
+        }
+      ],
+      "editor/context": [
+        {
+          "when": "resourceExtname == .md",
+          "command": "mdexport.exportPDF",
+          "group": "navigation@100"
+        },
+        {
+          "when": "resourceExtname == .md",
+          "command": "mdexport.exportDOCX",
+          "group": "navigation@101"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceExtname == .md",
+          "command": "mdexport.exportPDF",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MDExport",
+      "properties": {
+        "mdexport.defaultTheme": {
+          "type": "string",
+          "default": "clean",
+          "enum": ["clean", "dark", "editorial", "technical", "warm"],
+          "enumDescriptions": [
+            "Minimal, white, timeless",
+            "Code-first, dark background",
+            "Magazine-feel, elegant",
+            "Dense, structured, documentation",
+            "Inviting, slightly off-white"
+          ],
+          "description": "Default theme for exports"
+        },
+        "mdexport.defaultFont": {
+          "type": "string",
+          "default": "sans",
+          "enum": ["serif", "sans", "mono", "humanist", "slab"],
+          "enumDescriptions": [
+            "Lora / Georgia — elegant, readable",
+            "Inter / system-ui — clean, modern",
+            "JetBrains Mono — technical, code-heavy",
+            "Nunito / Trebuchet — warm, approachable",
+            "Roboto Slab / Rockwell — strong, confident"
+          ],
+          "description": "Default font family for exports"
+        },
+        "mdexport.defaultFormat": {
+          "type": "string",
+          "default": "pdf",
+          "enum": ["pdf", "docx"],
+          "description": "Default export format"
+        },
+        "mdexport.defaultMargins": {
+          "type": "string",
+          "default": "normal",
+          "enum": ["narrow", "normal", "wide"],
+          "description": "Default page margins"
+        },
+        "mdexport.defaultLineSpacing": {
+          "type": "number",
+          "default": 1.15,
+          "enum": [1.0, 1.15, 1.5, 2.0],
+          "description": "Default line spacing"
+        },
+        "mdexport.pageNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include page numbers by default"
+        },
+        "mdexport.toc": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include table of contents by default"
+        },
+        "mdexport.apiUrl": {
+          "type": "string",
+          "default": "https://mdexport-worker.ravensgatedev.workers.dev",
+          "description": "MDExport API endpoint"
+        }
+      }
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}

@@ -1,0 +1,36 @@
+/* Editorial — Magazine-feel, elegant */
+body {
+  background: #fffbf5;
+  color: #292524;
+}
+
+h1 { color: #b45309; font-style: italic; }
+h2 { color: #78350f; }
+h3, h4 { color: #451a03; }
+
+a { color: #b45309; }
+
+code {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+pre {
+  background: #fffbeb;
+  color: #451a03;
+  border: 1px solid #fde68a;
+}
+
+pre code { border: none; color: inherit; }
+
+blockquote {
+  border-left-color: #b45309;
+  color: #78350f;
+  font-style: italic;
+}
+
+th { background: #fef3c7; color: #78350f; }
+th, td { border-color: #fde68a; }
+
+hr { border-top-color: #fde68a; }

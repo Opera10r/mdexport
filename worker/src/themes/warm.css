@@ -1,0 +1,35 @@
+/* Warm — Inviting, slightly off-white */
+body {
+  background: #faf8f5;
+  color: #292524;
+}
+
+h1 { color: #92400e; }
+h2 { color: #78350f; }
+h3, h4 { color: #451a03; }
+
+a { color: #b45309; }
+
+code {
+  background: #f5f0eb;
+  border: 1px solid #e7e0d8;
+  color: #78350f;
+}
+
+pre {
+  background: #1c1917;
+  color: #d6d3d1;
+  border-radius: 8px;
+}
+
+pre code { border: none; color: inherit; }
+
+blockquote {
+  border-left-color: #92400e;
+  color: #57534e;
+}
+
+th { background: #f5f0eb; color: #44403c; }
+th, td { border-color: #e7e5e4; }
+
+hr { border-top-color: #e7e5e4; }
