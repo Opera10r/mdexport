@@ -1,0 +1,32 @@
+/* Clean — Minimal, white, timeless */
+body {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+h1, h2, h3, h4 { color: #000000; }
+
+a { color: #000000; text-decoration: underline; text-underline-offset: 3px; }
+
+code {
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+}
+
+pre {
+  background: #fafafa;
+  color: #1a1a1a;
+  border: 1px solid #e4e4e7;
+}
+
+pre code { border: none; }
+
+blockquote {
+  border-left-color: #d4d4d8;
+  color: #52525b;
+}
+
+th { background: #fafafa; }
+th, td { border-color: #e4e4e7; }
+
+hr { border-top-color: #e4e4e7; }

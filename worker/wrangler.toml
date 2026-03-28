@@ -1,0 +1,13 @@
+name = "mdexport-worker"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+[browser]
+binding = "BROWSER"
+
+[[kv_namespaces]]
+binding = "LICENSES"
+id = ""         # fill after `wrangler kv namespace create LICENSES`
+
+[vars]
+CORS_ORIGIN = "*"

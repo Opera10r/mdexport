@@ -1,0 +1,30 @@
+{
+  "name": "mdexport",
+  "version": "1.0.0",
+  "description": "Your markdown. Publication-ready in seconds.",
+  "type": "module",
+  "bin": {
+    "mdexport": "./bin/mdexport.js"
+  },
+  "scripts": {
+    "start": "node bin/mdexport.js"
+  },
+  "keywords": [
+    "markdown",
+    "pdf",
+    "docx",
+    "export",
+    "cli",
+    "converter"
+  ],
+  "author": "Raven's Gate Dev Tools",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "docx": "^9.6.1",
+    "marked": "^17.0.5",
+    "ora": "^8.1.0",
+    "puppeteer": "^24.40.0"
+  }
+}
