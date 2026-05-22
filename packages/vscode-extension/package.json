@@ -3,7 +3,7 @@
   "displayName": "MDExport — Markdown to PDF & DOCX",
   "description": "Export beautiful PDFs and DOCX files from Markdown with fonts, themes, cover pages and more.",
   "version": "1.0.0",
-  "publisher": "ravensgatedev",
+  "publisher": "RavensGateDevTools",
   "license": "MIT",
   "categories": ["Other", "Formatters"],
   "keywords": ["markdown", "pdf", "docx", "export", "md to pdf", "markdown export", "markdown pdf"],
