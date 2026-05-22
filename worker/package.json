@@ -10,7 +10,7 @@
   "dependencies": {
     "@cloudflare/puppeteer": "^0.0.15",
     "docx": "^8.5.0",
-    "marked": "^15.0.0",
+    "marked": "^18.0.4",
     "marked-highlight": "^2.2.0",
     "resend": "^4.0.0"
   },
