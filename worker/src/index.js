@@ -57,11 +57,27 @@ export default {
 // ── /export ──────────────────────────────────────────────────────────
 
 async function handleExport(request, env) {
-  const body = await request.json();
+  // Enforce size limit (1MB)
+  const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
+  if (contentLength > 1_048_576) {
+    return jsonResponse({ error: 'Request too large (max 1MB)' }, 413);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+  }
+
   const { markdown, format = 'pdf', license_key, options = {} } = body;
 
   if (!markdown || typeof markdown !== 'string') {
     return jsonResponse({ error: 'Missing or invalid "markdown" field' }, 400);
+  }
+
+  if (markdown.length > 500_000) {
+    return jsonResponse({ error: 'Markdown too large (max 500KB)' }, 413);
   }
 
   // Validate license

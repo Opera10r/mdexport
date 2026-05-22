@@ -9,7 +9,7 @@ Export beautiful PDFs and DOCX files from Markdown with themes, fonts, cover pag
 | Product | Distribution | Price |
 |---|---|---|
 | `mdexport` CLI | [npm](https://www.npmjs.com/package/mdexport) | Free (MIT) |
-| MDExport for VS Code | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ravensgatedev.mdexport) | $5/month |
+| MDExport for VS Code | [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=ravensgatedev.mdexport) | $1/month |
 
 ## Monorepo Structure
 
@@ -54,14 +54,9 @@ cd packages/vscode-extension && npm install && npm run build
 
 ## Architecture
 
-Both the CLI and VS Code extension call the same Cloudflare Worker API. The Worker handles:
-
-- Markdown → HTML parsing (via `marked`)
-- PDF rendering (via Cloudflare Browser Rendering / Puppeteer)
-- DOCX rendering (via `docx` npm package)
-- License key validation (via Cloudflare KV)
-- Stripe webhook handling for subscription management
-- License key delivery via Resend email
+- **CLI** — Fully local. Renders PDF/DOCX on your machine using Puppeteer. No API calls, no license needed.
+- **VS Code Extension** — Also renders locally. Calls the Cloudflare Worker only for license validation.
+- **Worker** — Handles license key validation (via Cloudflare KV), Stripe webhook processing, and license key delivery via Resend email.
 
 ## License
 

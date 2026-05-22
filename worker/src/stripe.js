@@ -1,5 +1,5 @@
 import { generateLicenseKey } from './auth.js';
-import { putLicense } from './kv.js';
+import { getLicense, putLicense } from './kv.js';
 import { sendLicenseEmail } from './email.js';
 
 /**
@@ -63,7 +63,7 @@ export async function handleStripeWebhook(request, env) {
       // Generate license key
       const licenseKey = generateLicenseKey();
 
-      // Store in KV
+      // Store in KV + subscription index for cancellation lookups
       await putLicense(licenseKey, {
         email,
         status: 'active',
@@ -72,6 +72,11 @@ export async function handleStripeWebhook(request, env) {
         created_at: new Date().toISOString(),
         exports_count: 0,
       }, env);
+
+      // Index: subscription_id → license_key (for cancellation handling)
+      if (subscriptionId) {
+        await env.LICENSES.put(`sub:${subscriptionId}`, licenseKey);
+      }
 
       // Send license key via email
       if (email) {
@@ -85,10 +90,21 @@ export async function handleStripeWebhook(request, env) {
     }
 
     case 'customer.subscription.deleted': {
-      // Subscription cancelled — deactivate license
-      // We'd need to look up by subscription_id, which requires a secondary index
-      // For MVP: handle via admin or manual KV update
-      // TODO: Build subscription_id → license_key index
+      // Subscription cancelled — deactivate license via subscription index
+      const sub = event.data.object;
+      const subId = sub.id;
+
+      // Look up the license key from the subscription index
+      const licenseKeyForSub = await env.LICENSES.get(`sub:${subId}`);
+      if (licenseKeyForSub) {
+        const license = await getLicense(licenseKeyForSub, env);
+        if (license) {
+          license.status = 'cancelled';
+          license.cancelled_at = new Date().toISOString();
+          await putLicense(licenseKeyForSub, license, env);
+        }
+      }
+
       return new Response('OK', { status: 200 });
     }
 

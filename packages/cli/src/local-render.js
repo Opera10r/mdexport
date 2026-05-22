@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import { Marked } from 'marked';
+import { renderMermaidInHTML } from './mermaid-ssr.js';
 
 const marked = new Marked({ gfm: true });
 
@@ -8,11 +9,14 @@ const marked = new Marked({ gfm: true });
  * No API call needed — runs entirely on your machine.
  */
 export async function localRenderPDF(markdown, options = {}) {
+  // 0. Process footnotes
+  const { cleaned, footnoteHTML } = processFootnotes(markdown);
+
   // 1. Parse markdown
-  let html = await marked.parse(markdown);
+  let html = await marked.parse(cleaned);
 
   // 2. Extract headings + add IDs
-  const headings = extractHeadings(markdown);
+  const headings = extractHeadings(cleaned);
   html = addHeadingIDs(html, headings);
 
   // 3. Build TOC
@@ -35,30 +39,41 @@ export async function localRenderPDF(markdown, options = {}) {
 ${coverHTML}
 ${tocHTML ? '<div style="page-break-after: always;">' + tocHTML + '</div>' : ''}
 ${html}
+${footnoteHTML}
 </body>
 </html>`;
 
   // 7. Render with Puppeteer
   const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-  await page.setContent(fullHTML, { waitUntil: 'domcontentloaded' });
-  // Give Google Fonts a chance to load, but don't block on it
-  await new Promise((r) => setTimeout(r, 2000));
 
-  const margins = getMargins(options.margins || 'normal');
-  const showHeaderFooter = !!(options.header || options.footer || options.pageNumbers);
+  try {
+    // 7a. Render mermaid diagrams to inline SVG (reuses the browser)
+    let processedHTML = fullHTML;
+    try {
+      processedHTML = await renderMermaidInHTML(fullHTML, browser);
+    } catch {
+      // If mermaid isn't installed or fails, continue without it
+    }
 
-  const pdf = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: margins,
-    displayHeaderFooter: showHeaderFooter,
-    headerTemplate: showHeaderFooter ? buildHeaderTemplate(options) : '',
-    footerTemplate: showHeaderFooter ? buildFooterTemplate(options) : '',
-  });
+    const page = await browser.newPage();
+    await page.setContent(processedHTML, { waitUntil: 'networkidle0', timeout: 15000 });
 
-  await browser.close();
-  return pdf;
+    const margins = getMargins(options.margins || 'normal');
+    const showHeaderFooter = !!(options.header || options.footer || options.pageNumbers);
+
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: margins,
+      displayHeaderFooter: showHeaderFooter,
+      headerTemplate: showHeaderFooter ? buildHeaderTemplate(options) : '',
+      footerTemplate: showHeaderFooter ? buildFooterTemplate(options) : '',
+    });
+
+    return pdf;
+  } finally {
+    await browser.close();
+  }
 }
 
 // ── Heading extraction ──────────────────────────────────────────────
@@ -135,12 +150,12 @@ function buildCSS(options) {
       color: #1a1a1a;
     }
 
-    h1 { font-size: 28px; font-weight: 700; margin: 32px 0 16px 0; }
-    h2 { font-size: 22px; font-weight: 600; margin: 28px 0 12px 0; }
-    h3 { font-size: 18px; font-weight: 600; margin: 24px 0 8px 0; }
-    h4 { font-size: 16px; font-weight: 600; margin: 20px 0 8px 0; }
+    h1 { font-size: 28px; font-weight: 700; margin: 32px 0 16px 0; break-after: avoid-page; page-break-after: avoid; }
+    h2 { font-size: 22px; font-weight: 600; margin: 28px 0 12px 0; break-after: avoid-page; page-break-after: avoid; }
+    h3 { font-size: 18px; font-weight: 600; margin: 24px 0 8px 0; break-after: avoid-page; page-break-after: avoid; }
+    h4 { font-size: 16px; font-weight: 600; margin: 20px 0 8px 0; break-after: avoid-page; page-break-after: avoid; }
 
-    p { margin: 0 0 12px 0; }
+    p { margin: 0 0 12px 0; widows: 2; orphans: 2; }
     a { color: ${accent}; text-decoration: none; }
 
     code {
@@ -159,6 +174,8 @@ function buildCSS(options) {
       overflow-x: auto;
       margin: 16px 0;
       font-size: 13px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     pre code { background: none; padding: 0; color: inherit; border: none; }
 
@@ -175,9 +192,19 @@ function buildCSS(options) {
     table { width: 100%; border-collapse: collapse; margin: 16px 0; }
     th, td { border: 1px solid #e4e4e7; padding: 8px 12px; text-align: left; }
     th { background: #f4f4f5; font-weight: 600; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; page-break-inside: avoid; }
 
     hr { border: none; border-top: 1px solid #e4e4e7; margin: 24px 0; }
     img { max-width: 100%; height: auto; }
+
+    /* Footnotes */
+    .fn-ref a { color: inherit; text-decoration: none; font-weight: 600; }
+    .footnotes { margin-top: 40px; font-size: 12px; color: #52525b; }
+    .footnotes hr { margin-bottom: 12px; }
+    .footnotes ol { padding-left: 20px; }
+    .fn-item { margin: 4px 0; }
+    .fn-back { text-decoration: none; color: #999; margin-left: 4px; }
 
     /* TOC */
     .toc { margin: 0 0 32px 0; }
@@ -321,4 +348,39 @@ function getMargins(size) {
 
 function esc(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ── Footnotes ───────────────────────────────────────────────────────
+
+function processFootnotes(markdown) {
+  // Extract definitions: [^label]: content
+  const defs = new Map();
+  const defRegex = /^\[\^([^\]]+)\]:\s*(.+)$/gm;
+  let match;
+  let counter = 0;
+  while ((match = defRegex.exec(markdown)) !== null) {
+    counter++;
+    defs.set(match[1], { num: counter, content: match[2] });
+  }
+
+  if (defs.size === 0) return { cleaned: markdown, footnoteHTML: '' };
+
+  // Remove definitions from markdown
+  let cleaned = markdown.replace(/^\[\^([^\]]+)\]:\s*(.+)$/gm, '').replace(/\n{3,}/g, '\n\n');
+
+  // Replace references [^label] with superscript links
+  cleaned = cleaned.replace(/\[\^([^\]]+)\]/g, (_, label) => {
+    const def = defs.get(label);
+    if (!def) return `[^${label}]`;
+    return `<sup class="fn-ref"><a href="#fn-${def.num}" id="fnref-${def.num}">${def.num}</a></sup>`;
+  });
+
+  // Build footnotes section
+  let footnoteHTML = '<section class="footnotes"><hr><ol>';
+  for (const [, info] of defs) {
+    footnoteHTML += `<li id="fn-${info.num}" class="fn-item">${esc(info.content)} <a href="#fnref-${info.num}" class="fn-back">\u21A9</a></li>`;
+  }
+  footnoteHTML += '</ol></section>';
+
+  return { cleaned, footnoteHTML };
 }

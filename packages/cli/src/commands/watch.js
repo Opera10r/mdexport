@@ -25,9 +25,9 @@ export async function watchCommand(filePath, opts) {
       try {
         await exportCommand(filePath, { ...opts, open: false });
       } catch {
-        // exportCommand handles its own errors
+        // exportCommand logs its own errors, don't exit
       }
-    }, 300);
+    }, 500);
   });
 
   // Keep process alive

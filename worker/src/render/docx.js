@@ -291,22 +291,21 @@ function buildCodeBlock(node) {
 }
 
 function buildBlockquote(node, accent) {
-  const runs = parseInlineFormatting(node.content);
-  // Make all runs italic and gray
-  for (const run of runs) {
-    // TextRun objects are immutable after creation, so we rebuild
-  }
+  // Parse to plain segments so we can override styles
+  const segments = parseInlineToPlain(node.content);
+  const children = segments.map((seg) =>
+    new TextRun({
+      text: seg.text,
+      bold: seg.bold,
+      italics: true,
+      color: '666666',
+      font: seg.font,
+      size: seg.size,
+    })
+  );
 
   return new Paragraph({
-    children: parseInlineFormatting(node.content).map((r) => {
-      return new TextRun({
-        text: r.text || '',
-        italics: true,
-        color: '666666',
-        font: r.font,
-        size: r.size,
-      });
-    }),
+    children: children.length > 0 ? children : [new TextRun({ text: node.content, italics: true, color: '666666' })],
     border: { left: { style: BorderStyle.SINGLE, size: 6, color: accent.replace('#', '') } },
     indent: { left: 360 },
     spacing: { before: 160, after: 160 },
@@ -550,4 +549,30 @@ function getDocxMargins(size) {
 function getAccent(theme) {
   const accents = { clean: '#000000', dark: '#7C3AED', editorial: '#B45309', technical: '#0369A1', warm: '#92400E' };
   return accents[theme] || '#000000';
+}
+
+/**
+ * Parse inline markdown to plain segment objects (not TextRun instances)
+ * so callers can override styles like italics/color.
+ */
+function parseInlineToPlain(text) {
+  const segments = [];
+  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`|\[(.+?)\]\((.+?)\)|([^*`\[]+))/g;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match[2]) {
+      segments.push({ text: match[2], bold: true });
+    } else if (match[3]) {
+      segments.push({ text: match[3] });
+    } else if (match[4]) {
+      segments.push({ text: match[4], font: 'Courier New', size: 20 });
+    } else if (match[5]) {
+      segments.push({ text: match[5] });
+    } else if (match[7]) {
+      segments.push({ text: match[7] });
+    }
+  }
+
+  return segments;
 }

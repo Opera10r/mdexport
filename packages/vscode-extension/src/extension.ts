@@ -74,11 +74,11 @@ export function activate(context: vscode.ExtensionContext) {
         const action = await vscode.window.showInformationMessage(
           'MDExport: No license key configured. Free tier active.',
           'Enter License Key',
-          'Get License ($5/month)'
+          'Get License ($1/month)'
         );
         if (action === 'Enter License Key') {
           vscode.commands.executeCommand('mdexport.enterLicense');
-        } else if (action === 'Get License ($5/month)') {
+        } else if (action === 'Get License ($1/month)') {
           vscode.env.openExternal(vscode.Uri.parse('https://mdexport.dev'));
         }
         return;

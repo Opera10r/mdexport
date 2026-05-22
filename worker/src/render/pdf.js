@@ -25,29 +25,32 @@ export async function renderPDF(markdown, options, env) {
 
   // 6. Render with Puppeteer
   const browser = await puppeteer.default.launch(env.BROWSER);
-  const page = await browser.newPage();
-  await page.setContent(fullHTML, { waitUntil: 'networkidle0' });
 
-  const margins = getMargins(options.margins || 'normal');
-  const showHeaderFooter = !!(options.header || options.footer || options.page_numbers);
+  try {
+    const page = await browser.newPage();
+    await page.setContent(fullHTML, { waitUntil: 'networkidle0', timeout: 15000 });
 
-  const pdf = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: margins,
-    displayHeaderFooter: showHeaderFooter,
-    headerTemplate: showHeaderFooter ? buildHeaderTemplate(options) : '',
-    footerTemplate: showHeaderFooter ? buildFooterTemplate(options) : '',
-  });
+    const margins = getMargins(options.margins || 'normal');
+    const showHeaderFooter = !!(options.header || options.footer || options.page_numbers);
 
-  await browser.close();
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: margins,
+      displayHeaderFooter: showHeaderFooter,
+      headerTemplate: showHeaderFooter ? buildHeaderTemplate(options) : '',
+      footerTemplate: showHeaderFooter ? buildFooterTemplate(options) : '',
+    });
 
-  return new Response(pdf, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="export.pdf"',
-    },
-  });
+    return new Response(pdf, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'attachment; filename="export.pdf"',
+      },
+    });
+  } finally {
+    await browser.close();
+  }
 }
 
 // ── CSS Assembly ─────────────────────────────────────────────────────

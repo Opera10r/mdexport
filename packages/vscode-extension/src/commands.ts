@@ -1,9 +1,26 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+/**
+ * Find the mdexport CLI entry point.
+ * Prefers the globally installed `mdexport`, falls back to the bundled copy
+ * relative to this extension, then to npx.
+ */
+function findCliPath(context: vscode.ExtensionContext): { node: string; script: string } | { npx: string } {
+  // Use the CLI bundled alongside the extension (monorepo layout)
+  const bundled = path.resolve(context.extensionPath, '..', 'cli', 'bin', 'mdexport.js');
+  try {
+    require('fs').accessSync(bundled);
+    return { node: process.execPath, script: bundled };
+  } catch {
+    // Not found — fall back to npx
+  }
+  return { npx: 'mdexport' };
+}
 
 export async function exportFile(
   filePath: string,
@@ -11,7 +28,8 @@ export async function exportFile(
   context: vscode.ExtensionContext
 ) {
   const config = vscode.workspace.getConfiguration('mdexport');
-  const fileName = path.basename(filePath, '.md');
+  const ext = path.extname(filePath);
+  const fileName = path.basename(filePath, ext);
 
   const font = config.get<string>('defaultFont', 'sans');
   const theme = config.get<string>('defaultTheme', 'clean');
@@ -19,6 +37,13 @@ export async function exportFile(
   const margins = config.get<string>('defaultMargins', 'normal');
   const lineSpacing = config.get<number>('defaultLineSpacing', 1.15);
   const pageNumbers = config.get<boolean>('pageNumbers', true);
+  const saveToDesktop = config.get<boolean>('saveToDesktop', true);
+
+  // Output to Desktop or next to source file
+  const outputDir = saveToDesktop
+    ? path.join(process.env.HOME || process.env.USERPROFILE || '', 'Desktop')
+    : path.dirname(filePath);
+  const outputPath = path.join(outputDir, `${fileName}.${format}`);
 
   // Build CLI args
   const args = [
@@ -29,24 +54,29 @@ export async function exportFile(
     '--theme', theme,
     '--margins', margins,
     '--line-spacing', String(lineSpacing),
+    '--output', outputPath,
   ];
   if (toc) { args.push('--toc'); }
   if (pageNumbers) { args.push('--page-numbers'); }
-
-  // Output defaults to Desktop
-  const desktop = process.env.HOME
-    ? path.join(process.env.HOME, 'Desktop')
-    : path.join(process.env.USERPROFILE || '', 'Desktop');
-  const outputPath = path.join(desktop, `${fileName}.${format}`);
+  if (saveToDesktop) { args.push('--desktop'); }
 
   try {
-    const shellArgs = args.map(a => `"${a}"`).join(' ');
-    await execAsync(`/opt/homebrew/opt/node@20/bin/node /Users/parsifal2.0/Desktop/mdexport/packages/cli/bin/mdexport.js ${shellArgs}`, {
-      timeout: 120000,
-    });
+    const cli = findCliPath(context);
+    if ('npx' in cli) {
+      await execFileAsync('npx', [cli.npx, ...args], {
+        timeout: 120000,
+        env: process.env,
+        shell: true,
+      });
+    } else {
+      await execFileAsync(cli.node, [cli.script, ...args], {
+        timeout: 120000,
+        env: process.env,
+      });
+    }
 
     const action = await vscode.window.showInformationMessage(
-      `MDExport: Exported ${fileName}.${format} to Desktop`,
+      `MDExport: Exported ${fileName}.${format}`,
       'Open File',
       'Show in Explorer'
     );
@@ -57,7 +87,12 @@ export async function exportFile(
       vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(outputPath));
     }
   } catch (error: any) {
-    vscode.window.showErrorMessage(`MDExport error: ${error.message}`);
+    const stderr = error.stderr ? `\n${error.stderr}` : '';
+    const msg = `MDExport error: ${error.message}${stderr}`;
+    const channel = vscode.window.createOutputChannel('MDExport');
+    channel.appendLine(msg);
+    channel.show();
+    vscode.window.showErrorMessage(`MDExport failed for ${fileName}.${format} — see Output panel for details.`);
   }
 }
 
@@ -68,7 +103,8 @@ export async function quickExport(
 ) {
   const filePath = uri?.fsPath || vscode.window.activeTextEditor?.document.fileName;
 
-  if (!filePath?.endsWith('.md')) {
+  const mdExts = ['.md', '.mdx', '.markdown', '.mdown', '.mkd'];
+  if (!filePath || !mdExts.includes(path.extname(filePath).toLowerCase())) {
     vscode.window.showErrorMessage('MDExport: Please open or select a Markdown file.');
     return;
   }
