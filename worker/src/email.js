@@ -9,7 +9,7 @@ export async function sendLicenseEmail(toEmail, licenseKey, env) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'MDExport <noreply@mdexport.dev>',
+      from: 'MDExport <onboarding@resend.dev>',
       to: [toEmail],
       subject: 'Your MDExport License Key',
       html: `
