@@ -16,7 +16,7 @@ That's it.
 
 ## Features
 
-| Feature | Free | Pro ($5/mo) |
+| Feature | Free | Pro ($1/mo) |
 |---|:---:|:---:|
 | PDF export | Yes | Yes |
 | DOCX export | — | Yes |
@@ -87,7 +87,7 @@ The CLI exports basic PDFs with the Clean theme. Upgrade to Pro in VS Code for t
 
 ## Get Pro
 
-**$5/month** — unlock all themes, fonts, DOCX, cover pages, and more.
+**$1/month** — unlock all themes, fonts, DOCX, cover pages, and more.
 
 Visit [mdexport.dev](https://mdexport.dev) to subscribe.
 

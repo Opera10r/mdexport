@@ -131,9 +131,14 @@
           "default": false,
           "description": "Include table of contents by default"
         },
+        "mdexport.saveToDesktop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Save exported files to Desktop (off = save next to source file)"
+        },
         "mdexport.apiUrl": {
           "type": "string",
-          "default": "https://mdexport-worker.ravensgatedev.workers.dev",
+          "default": "https://mdexport-worker.opera10r.workers.dev",
           "description": "MDExport API endpoint"
         }
       }

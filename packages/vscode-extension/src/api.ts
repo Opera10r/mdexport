@@ -23,7 +23,7 @@ interface ValidateResult {
 
 function getApiUrl(): string {
   const config = vscode.workspace.getConfiguration('mdexport');
-  return config.get('apiUrl', 'https://mdexport-worker.ravensgatedev.workers.dev');
+  return config.get('apiUrl', 'https://mdexport-worker.opera10r.workers.dev');
 }
 
 export async function callExportAPI(

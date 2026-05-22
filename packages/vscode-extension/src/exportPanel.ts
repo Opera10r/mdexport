@@ -599,7 +599,7 @@ export class ExportPanel {
   ${!state.licensed ? `
   <div class="upsell">
     <div class="upsell-title">Unlock MDExport Pro</div>
-    <div class="upsell-desc">$5/month &middot; Cancel anytime</div>
+    <div class="upsell-desc">$1/month &middot; Cancel anytime</div>
     <div class="upsell-features">
       <span class="upsell-feat">4 Themes</span>
       <span class="upsell-feat">5 Fonts</span>
