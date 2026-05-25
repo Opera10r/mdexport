@@ -28,7 +28,7 @@
     "docx": "8.5.0",
     "marked": "15.0.12",
     "ora": "8.2.0",
-    "puppeteer": "24.40.0"
+    "puppeteer": "25.0.4"
   },
   "optionalDependencies": {
     "mermaid": "11.13.0"
